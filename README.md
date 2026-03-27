@@ -86,7 +86,7 @@ docker compose up -d
 
 ---
 
-## 三、落地建议（珠海招投标情报抓取测试版）
+## 三、落地建议
 
 核心架构：Docker Compose一键编排「MySQL+爬虫容器+Nginx展示页」
 核心功能：`schedule`定时抓取招投标公告→MySQL结构化存储→Nginx简易前端展示，配合健康检查保障服务依赖顺序
