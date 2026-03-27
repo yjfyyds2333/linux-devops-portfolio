@@ -1,0 +1,75 @@
+name: day1
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    networks:
+      - frontend
+    restart: always
+    volumes:
+      - ~/my-nginx:/etc/nginx/templates
+      - ~/project/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      - NGINX_HOST=foobar.com
+      - NGINX_PORT=80
+    depends_on:
+      - app
+     
+  
+  app:
+    image: python:latest
+    command: python -c "import time; time.sleep(99999)"
+    networks:
+      - frontend
+      - backend
+    restart: always
+
+  db:
+    image: mysql:latest
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u","root","-p${MYSQL_ROOT_PASSWORD}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    ports:
+      - "3306:3306"
+    restart: always
+    volumes:
+      - ~/project/mysql/mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_HOST: '%'
+
+  scraper:
+    image: scraper1:v1.0
+    networks:
+      - backend
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_ROOT_PASSWORD: ${MYSQL_DATABASE}
+      DB_NAME: ${MYSQL_DATABASE}
+    depends_on:
+      db: 
+        condition: service_healthy
+    restart: "no"  
+    
+networks:
+  frontend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  mysql-data:
